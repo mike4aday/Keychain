@@ -11,9 +11,18 @@ import Foundation
 /// Simple wrapper around keychain for secure storage.
 /// Adapted from https://developer.apple.com/library/content/samplecode/GenericKeychain/Listings/GenericKeychain_KeychainPasswordItem_swift.html
 
-internal final class Keychain {
+public final class Keychain {
 	
-	static func write(data: Data, service: String, account: String) throws {
+
+    enum Error: Swift.Error {
+	    case readFailure(status: OSStatus)
+	    case writeFailure(status: OSStatus)
+	    case deleteFailure(status: OSStatus)
+	    case itemNotFound(service: String, account: String)
+	    case itemHasNoData(service: String, account: String)
+    }
+
+	public static func write(data: Data, service: String, account: String) throws {
 		
 		do {
 			// Check for an existing item in the keychain.
@@ -28,7 +37,7 @@ internal final class Keychain {
 			
 			// Throw an error if an unexpected status was returned.
 			guard status == noErr else {
-				throw KeychainError.writeFailure(status: status)
+				throw Keychain.Error.writeFailure(status: status)
 			}
 		}
 		catch KeychainError.itemNotFound {
@@ -42,12 +51,12 @@ internal final class Keychain {
 			
 			// Throw an error if an unexpected status was returned.
 			guard status == noErr else {
-				throw KeychainError.writeFailure(status: status)
+				throw Keychain.Error.writeFailure(status: status)
 			}
 		}
 	}
 	
-	static func read(service: String, account: String) throws -> Data  {
+	public static func read(service: String, account: String) throws -> Data  {
 		
 		// Build a query to find the item that matches the service and account
 		var query = buildQuery(service: service, account: account)
@@ -63,21 +72,21 @@ internal final class Keychain {
 		
 		// Check the return status and throw an error if appropriate.
 		guard status != errSecItemNotFound else {
-			throw KeychainError.itemNotFound(service: service, account: account)
+			throw Keychain.Error.itemNotFound(service: service, account: account)
 		}
 		guard status == noErr else {
-			throw KeychainError.readFailure(status: status)
+			throw Keychain.Error.readFailure(status: status)
 		}
 		
 		// Parse the data from the query result.
 		guard let existingItem = queryResult as? [String : AnyObject], let data = existingItem[kSecValueData as String] as? Data else {
-			throw KeychainError.itemHasNoData(service: service, account: account)
+			throw Keychain.Error.itemHasNoData(service: service, account: account)
 		}
 		
 		return data
 	}
 	
-	static func delete(service: String, account: String) throws {
+	public static func delete(service: String, account: String) throws {
 		
 		// Delete the existing item from the keychain.
 		let query = buildQuery(service: service, account: account)
@@ -85,7 +94,7 @@ internal final class Keychain {
 		
 		// Throw an error if an unexpected status was returned.
 		guard status == noErr || status == errSecItemNotFound else {
-			throw KeychainError.deleteFailure(status: status)
+			throw Keychain.Error.deleteFailure(status: status)
 		}
 	}
 	
