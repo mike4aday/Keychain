@@ -1,11 +1,3 @@
-//
-//  Keychain.swift
-//  SwiftlySalesforce
-//
-//  For license & details see: https://www.github.com/mike4aday/Keychain
-//  Copyright (c) 2017. All rights reserved.
-//
-
 import Foundation
 
 /// Simple wrapper around keychain for secure storage.
@@ -13,15 +5,14 @@ import Foundation
 
 public final class Keychain {
 	
-
-    enum Error: Swift.Error {
-	    case readFailure(status: OSStatus)
-	    case writeFailure(status: OSStatus)
-	    case deleteFailure(status: OSStatus)
-	    case itemNotFound(service: String, account: String)
-	    case itemHasNoData(service: String, account: String)
-    }
-
+	public enum Error: Swift.Error {
+		case readFailure(status: OSStatus)
+		case writeFailure(status: OSStatus)
+		case deleteFailure(status: OSStatus)
+		case itemNotFound(service: String, account: String)
+		case itemHasNoData(service: String, account: String)
+	}
+	
 	public static func write(data: Data, service: String, account: String) throws {
 		
 		do {
@@ -40,7 +31,7 @@ public final class Keychain {
 				throw Keychain.Error.writeFailure(status: status)
 			}
 		}
-		catch KeychainError.itemNotFound {
+		catch Keychain.Error.itemNotFound {
 			
 			// No password was found in the keychain. Create a dictionary to save as a new keychain item.
 			var newItem = buildQuery(service: service, account: account)
